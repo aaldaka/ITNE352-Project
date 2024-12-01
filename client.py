@@ -67,7 +67,7 @@ def display_details(res_type, res):
 def router(client_s):
     while True:
         main_menu=["Search Headlines", "List of Sources", "Quit"]
-        print("===Main Menu===\n")
+        print("=== Main Menu ===\n")
         enumerate_list(main_menu)
         action = int(input("Select an option: "))
         match action:
@@ -106,12 +106,10 @@ def handle_headlines(client_s):
     req = {"type": "headlines", "action": action, "parameter": parameter}
     handle_req(client_s, req)
 
-
 def handle_sources(client_s): #need to map actions to proper actions
     print("=== Sources Menu ===")
     action=int(input(enumerate_list(SSUBMENU)))
     
-    # is action choice allowed?
     if 0<= action <4:
         if action == 0:
             print("=== Categories ===")
@@ -145,18 +143,6 @@ def main():
     username = input("Welcome, please type your name:\n")
     print(f"Welcome {username}, choose an option: ")
     router(client_s)
-
-
-
-
-    
-
-
-
-
-
-
-
 
 if __name__ == "__main__":
     main()
