@@ -52,25 +52,25 @@ def display_results(response):
     except ValueError:
         print("Invalid input, returning to menu.")
 
-        
 def display_details(res_type, res):
-    if res_type=="headlines":
+    if res_type == "headlines":
         print("\n=== Headline Details ===")
-        print(f"Source: {res_type["source_name"]}")
-        print(f"Author: {res_type["author"]}")
-        print(f"Title: {res_type["title"]}")
-        print(f"URL: {res_type["url"]}")
-        print(f"Description: {res_type["description"]}")
-        print(f"Published Date: {res_type["publish_date"]}")
-        print(f"Published Time: {res_type["publish_time"]}")
-    elif res_type=="sources":
-        print("\n=== Source Details ===")            
-        print(f"Source: {res_type["source_name"]}")
-        print(f"Country: {res_type["country"]}")
-        print(f"Description: {res_type["description"]}")
-        print(f"URL: {res_type["url"]}")
-        print(f"Category: {res_type["category"]}")
-        print(f"Language: {res_type["language"]}")
+        print(f"Source: {res['source_name']}")
+        print(f"Author: {res['author']}")
+        print(f"Title: {res['title']}")
+        print(f"URL: {res['url']}")
+        print(f"Description: {res['description']}")
+        print(f"Published Date: {res['publish_date']}")
+        print(f"Published Time: {res['publish_time']}")
+    elif res_type == "sources":
+        print("\n=== Source Details ===")
+        print(f"Source: {res['source_name']}")
+        print(f"Country: {res['country']}")
+        print(f"Description: {res['description']}")
+        print(f"URL: {res['url']}")
+        print(f"Category: {res['category']}")
+        print(f"Language: {res['language']}")
+
 
 def router(client_s):
     while True:
@@ -148,10 +148,9 @@ def handle_quit(client_s):
     exit()
 
 def main():
-    server_add=("localhost", 8080)
     client_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #TCP socket connection
-    client_s.connect(server_add) #connect to server
-    print(f"You've successfully connected to the server {server_add}") #successful msg
+    client_s.connect(("127.0.0.1",8080)) #connect to server
+    print(f"You've successfully connected to the server {8080}") #successful msg
     username = input("Welcome, please type your name:\n")
     print(f"Welcome {username}, choose an option: ")
     router(client_s)
