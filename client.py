@@ -6,15 +6,20 @@ COUNTRIES = ["AU", "CA", "JP", "AE", "SA", "KR", "US", "MA"]
 LANGUAGES = ["AR", "EN"]
 CATEGORIES = ["Business", "General", "Health", "Science", "Sports", "Technology"]
 HSUBMENU = ["Search for Keywords", "Search by Category", "Search by Country", "List all New headlines", "Back to main menu"]
-SSUBMENU = ["Search by Category", "Search by Country", "List all", "Back to main menu"]
+SSUBMENU = ["Search by Category", "Search by Country", "Search by Language", "List all", "Back to main menu"]
 
 def enumerate_list(options):#avoiding redundancy
     for index, option in enumerate(options, start=0): 
         print(f"{index}- {option}")
+    return "\nSelect an option: "
+    
+def handle_req(client_s, req):
+    try:
+        enc_req = json.dumps(req).encode("utf-8")
+        client_s.sendall(enc_req)
+    except Exception as e:
+        print(f"Error sending request: {e}")
 
-def handle_req(client_s,req):
-    enc_req=json.dump(req).encode("utf-8")
-    client_s.sendall(enc_req) #instead of sendto, this is for tcp
 
 def handle_res(client_s):
     response = json.loads(client_s.recv(4096).decode('utf-8'))
@@ -25,25 +30,28 @@ def handle_res(client_s):
         print("Error: Unknown error occured") #could be more specific    
         
 def display_results(response):
-    results=response.get("results", [])[:15]
-    if not results: #it was an empty slice
-     print("No results found")
-     return
-    
-    for i, res in enumerate(results, start=0):
-        if response["type"]=="headlines": #src, auth, title
-            print(f"{i}- {res["source_name"]}: {res["author"]} presents {res["title"]}")
-        elif response["type"]=="sources":
-            print(f"{i}- {res["source_name"]}")    
-        option=int(input("Select a number to view further details, else -1 to return:\n "))
+    results = response.get("results", [])[:15]
+    if not results:
+        print("No results found.")
+        return
 
-        if option==-1:
+    for i, res in enumerate(results, start=0):
+        if response["type"] == "headlines":
+            print(f"{i}- {res['source_name']}: {res['author']} presents {res['title']}")
+        elif response["type"] == "sources":
+            print(f"{i}- {res['source_name']}")
+
+    try:
+        option = int(input("Select a number to view further details, else -1 to return:\n"))
+        if option == -1:
             return
-        elif 0<= option <len(results):
+        elif 0 <= option < len(results):
             display_details(response["type"], results[option])
         else:
-            print("Invalid option")    
-            return
+            print("Invalid option.")
+    except ValueError:
+        print("Invalid input, returning to menu.")
+
         
 def display_details(res_type, res):
     if res_type=="headlines":
@@ -110,7 +118,7 @@ def handle_sources(client_s): #need to map actions to proper actions
     print("=== Sources Menu ===")
     action=int(input(enumerate_list(SSUBMENU)))
     
-    if 0<= action <4:
+    if 0<= action <= 4:
         if action == 0:
             print("=== Categories ===")
             category_choice = int(input(enumerate_list(CATEGORIES))) 
@@ -119,9 +127,13 @@ def handle_sources(client_s): #need to map actions to proper actions
             print("=== Countries ===")
             country_choice = int(input(enumerate_list(COUNTRIES)))
             parameter = COUNTRIES[country_choice]
-        elif action == 2:
+        elif action == 2: 
+            print("=== Languages ===")
+            lang_choice = int(input(enumerate_list(LANGUAGES)))
+            parameter = LANGUAGES[lang_choice]    
+        elif action == 3:
             parameter = "List all"
-        elif action == 3: 
+        elif action == 4: 
             router(client_s)
             return 
     else:
