@@ -38,6 +38,7 @@ def welcome(): # Welcoming user
     username = username_input.get().strip()
     if username:
         clientName=username
+        output_text.insert("end", "────୨ৎ────\n")
         output_text.insert("end", f"Welcome, {clientName}!\nEnjoy your ride throughout the news.\n")
         username_input.delete(0, 'end')
         username_label.pack_forget()  # Hides the previous inputs and labels
@@ -53,7 +54,7 @@ button.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 def handle_main(): # Displays main menu
     clearingButtons()
     output_text.delete("1.0", "end")  # Clear previous output
-    output_text.insert("end", "Select a main menu button option\n")
+    output_text.insert("end", "𑁍Select a main menu button option\n")
 
     for item in MAIN_MENU:
         button = ck.CTkButton(app, text=item, command=lambda item=item: router(item))
@@ -116,12 +117,12 @@ def display_results(response):
     results = response.get("results", [])[:15]  # Limit to first 15 results
 
     if not results:
-        output_text.insert("end", "No results found.\nReturning to the main menu...\n")
+        output_text.insert("end", "𑁍No results found.\nReturning to the main menu...\n")
         app.after(1500, handle_main)
         return  # Exit the function early
     
-    output_text.insert("end", "Results\n")
-    output_text.insert("end", "Click on a record to view its details\n")
+    output_text.insert("end", "𑁍Results\n")
+    output_text.insert("end", "-Click on a record to view its details\n")
 
     # Create a frame to hold the Listbox and Scrollbar
     listbox_frame = ck.CTkFrame(app)
@@ -158,7 +159,7 @@ def display_details(result_type, result,response):
     clearingButtons()
     output_text.delete("1.0", "end")  # Clear the output box
 
-    output_text.insert("end", "Details\n")
+    output_text.insert("end", "𑁍Details\n")
     if result_type == "headlines":
         output_text.insert("end", f"Source: {result['source_name']}\n")
         output_text.insert("end", f"Author: {result['author']}\n")
@@ -185,7 +186,7 @@ def display_details(result_type, result,response):
 #--------------------------Headline handling-------------------
 def handle_headlines():
     clearingButtons()
-    output_text.insert("end", "Select a headline menu button option\n")
+    output_text.insert("end", "𑁍Select a headline menu button option\n")
     for index, item in enumerate(HSUBMENU):
         button = ck.CTkButton(app, text=item, command=lambda index=index: handle_headline_action(index))
         button.pack(pady=5)
@@ -195,7 +196,7 @@ def handle_headline_action(action):
     clearingButtons()
 
     if action == 0:  # Search by Keyword
-        user_inp("Enter Keyword:", process_headline_input, action)
+        user_inp("-Enter Keyword:", process_headline_input, action)
     elif action == 1:  # Search by Category
         handle_category_selection("headlines")
     elif action == 2:  # Search by Country
@@ -251,7 +252,7 @@ def process_headline_input(input_keyword, action):
 #--------------------------Sources handling-------------------
 def handle_sources():
     clearingButtons()
-    output_text.insert("end", "Sources Menu\n")
+    output_text.insert("end", "𑁍Sources Menu\n")
     for index, item in enumerate(SSUBMENU):
         button = ck.CTkButton(app, text=item, command=lambda index=index: handle_source_action(index))
         button.pack(pady=5)
@@ -274,7 +275,7 @@ def handle_source_action(action):
 
 def handle_language_selection():
     clearingButtons()
-    output_text.insert("end", "Languages\n")
+    output_text.insert("end", "𑁍Languages\n")
     for index, language in enumerate(LANGUAGES):
         button = ck.CTkButton(app, text=language, command=lambda index=index, type=type: language_selected(index))
         button.pack(pady=5)
@@ -292,7 +293,7 @@ def language_selected(index):
 #--------------------------Shared functions-------------------
 def handle_category_selection(type):
     clearingButtons()
-    output_text.insert("end", "Categories\n")
+    output_text.insert("end", "𑁍Categories\n")
     for index, category in enumerate(CATEGORIES):
         button = ck.CTkButton(app, text=category, command=lambda index=index, type=type: category_selected(index,type))
         button.pack(pady=5)
@@ -310,7 +311,7 @@ def category_selected(index,type):
 
 def handle_country_selection(type):
     clearingButtons()
-    output_text.insert("end", "Countries\n")
+    output_text.insert("end", "𑁍Countries\n")
     for index, country in enumerate(COUNTRIES):
         button = ck.CTkButton(app, text=country, command=lambda index=index, type=type: country_selected(index,type))
         button.pack(pady=5)
