@@ -2,27 +2,29 @@ import socket
 import pickle
 import customtkinter as ck
 import tkinter as tk
-import tkinter.font as tkfont
+import threading
 
+#Variables
 MAIN_MENU = ["Search Headlines", "List of Sources", "Quit"]
 COUNTRIES = ["AU", "CA", "JP", "AE", "SA", "KR", "US", "MA"]
 LANGUAGES = ["AR", "EN"]
 CATEGORIES = ["Business", "General", "Health", "Science", "Sports", "Technology"]
 HSUBMENU = ["Search for Keywords", "Search by Category", "Search by Country", "List all", "Back to main menu"]
 SSUBMENU = ["Search by Category", "Search by Country", "Search by Language", "List all", "Back to main menu"]
-action_buttons = [] #to be cleared
+action_buttons = [] # to be cleared
 dynamic_widgets = []
-req = {} #to be formulatted
+req = {} # to be formulatted
 keyword = ""
 BUFFER_SIZE = 4075
 clientName = ""
 
+#Window
 app = ck.CTk()
 app.title("NewsBeacon")
 ck.set_appearance_mode("system")
 ck.set_default_color_theme("blue")
 app.geometry("450x600")
-global_font = ck.CTkFont(family="Arial", size=16, weight="bold")
+global_font = ck.CTkFont(family = "Arial", size = 16, weight = "bold")
 
 username_label = ck.CTkLabel(app, text="Hello\nEnter your name:")
 username_label.pack(pady=10)
@@ -31,35 +33,34 @@ username_input.pack(pady=10)
 output_text = ck.CTkTextbox(app, width=500, height=200, font=global_font)
 output_text.pack(pady=10)
 
-def welcome():
+def welcome(): # Welcoming user
     global clientName
     username = username_input.get().strip()
     if username:
         clientName=username
         output_text.insert("end", f"Welcome, {clientName}!\nEnjoy your ride throughout the news.\n")
         username_input.delete(0, 'end')
-        username_label.pack_forget()  # Hide the username label
-        username_input.pack_forget()   # Hide the input field
-        button.place_forget()           # Hide the submit button
-        app.after(2000, handle_main)  # Wait for 2 seconds before showing the main menu
+        username_label.pack_forget()  # Hides the previous inputs and labels
+        username_input.pack_forget()   
+        button.place_forget()       
+        app.after(2000, handle_main)  # Pause before redirection
     else:
         output_text.insert("end", "Please enter a valid name.\n")
 
 button = ck.CTkButton(master=app, text="Submit", command=welcome)
 button.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
-def handle_main():
+def handle_main(): # Displays main menu
     clearingButtons()
     output_text.delete("1.0", "end")  # Clear previous output
-    output_text.insert("end", "*****Select a main menu button option*****\n")
+    output_text.insert("end", "Select a main menu button option\n")
 
     for item in MAIN_MENU:
         button = ck.CTkButton(app, text=item, command=lambda item=item: router(item))
         button.pack(pady=5)
         action_buttons.append(button)
 
-
-def router(action):
+def router(action): # Redirections to menus
     clearingButtons()
     if action == "Search Headlines":
         handle_headlines()
@@ -68,8 +69,7 @@ def router(action):
     elif action == "Quit":
         app.quit()        
 
-import threading
-
+# Handles request
 def handle_req(type, action, parameter):  # Formats data using pickle, to send to the server
     request_data = {
         "type": type,  # Type of request: headlines, sources, etc.
@@ -78,11 +78,8 @@ def handle_req(type, action, parameter):  # Formats data using pickle, to send t
         "username": clientName
     }
     print(request_data)
-    # Serialize the request data using pickle
     encoded_request = pickle.dumps(request_data)
-
-    # Create a separate thread to handle the network request
-    threading.Thread(target=send_request_to_server, args=(encoded_request,)).start()
+    threading.Thread(target=send_request_to_server, args=(encoded_request,)).start()  # Diff thread to handle the request
 
 def send_request_to_server(encoded_request):
     try:
@@ -91,34 +88,28 @@ def send_request_to_server(encoded_request):
             client_s.connect(("127.0.0.1", 8081))  # Connect to the server
             print("Sending request...")
             client_s.sendall(encoded_request)  # Send the encoded request
-
-            # Receive the response from the server
-            response_data = b""  # Ensure this is binary
+            response_data = b"" 
             while True:
-                part = client_s.recv(1024)  # Assuming 1024 byte buffer size
+                part = client_s.recv(1024)
                 response_data += part
                 if len(part) < 1024:
                     break
 
-            # Deserialize the response
-            response = pickle.loads(response_data)
-
-            # Update the GUI with the response in the main thread
-            app.after(0, process_response, response)
+            response = pickle.loads(response_data) # Deserialize the response
+            app.after(0, process_response, response) # Update the GUI with the response in the main thread
     except Exception as e:
-        # Update the GUI with the error message in the main thread
         app.after(0, output_text.insert, "end", f"Error communicating with server: {e}\n")
         print(f"Error: {e}")
-
 
 def process_response(response):
     if response.get("status_code") == 200:
         clearingButtons()
-        output_text.insert("end","*****Results*****\n")
+        output_text.insert("end","Results\n")
         display_results(response)
     else:
         output_text.insert("end", f"Error: {response.get('message', 'Unknown error occurred')}\n")
 
+# Handles Results and Details
 def display_results(response):
     clearingButtons()
     output_text.delete("1.0", "end")  # Clear previous output
@@ -129,24 +120,21 @@ def display_results(response):
         app.after(1500, handle_main)
         return  # Exit the function early
     
-    output_text.insert("end", "*****Results*****\n")
+    output_text.insert("end", "Results\n")
     output_text.insert("end", "Click on a record to view its details\n")
 
     # Create a frame to hold the Listbox and Scrollbar
     listbox_frame = ck.CTkFrame(app)
     listbox_frame.pack(pady=10, fill="both", expand=True)
     dynamic_widgets.append(listbox_frame)
-
     # Create a Listbox widget
     result_listbox = tk.Listbox(listbox_frame, height=15, selectmode=tk.SINGLE)
     result_listbox.pack(side="left", fill="both", expand=True)
-
     # Attach a scrollbar to the Listbox
     scrollbar = tk.Scrollbar(listbox_frame, orient="vertical", command=result_listbox.yview)
     scrollbar.pack(side="right", fill="y")
     result_listbox.config(yscrollcommand=scrollbar.set)
 
-    # Populate the Listbox with results
     for i, res in enumerate(results):
         if response["type"] == "headlines":
             item_text = f"{i+1}. {res['source_name']}: {res['author']} presents - {res['title']}"
@@ -154,7 +142,6 @@ def display_results(response):
             item_text = f"{i+1}. {res['source_name']}"
         result_listbox.insert("end", item_text)
 
-    # Add an event handler for selection
     def on_select(event):
         selected_index = result_listbox.curselection()  # Get the index of the selected item
         if selected_index:
@@ -163,7 +150,6 @@ def display_results(response):
 
     result_listbox.bind("<<ListboxSelect>>", on_select)
 
-    # Add a back button
     back_button = ck.CTkButton(app, text="Back to main menu", command=lambda: [listbox_frame.destroy(), handle_main()])
     back_button.pack(pady=5)
     action_buttons.append(back_button)
@@ -172,7 +158,7 @@ def display_details(result_type, result,response):
     clearingButtons()
     output_text.delete("1.0", "end")  # Clear the output box
 
-    output_text.insert("end", "*****Details*****\n")
+    output_text.insert("end", "Details\n")
     if result_type == "headlines":
         output_text.insert("end", f"Source: {result['source_name']}\n")
         output_text.insert("end", f"Author: {result['author']}\n")
@@ -180,7 +166,6 @@ def display_details(result_type, result,response):
         output_text.insert("end", f"URL: {result['url']}\n")
         output_text.insert("end", f"Published on: {result['publish_date']}\n")
         output_text.insert("end", f"Published at: {result['publish_time']}\n")
-
     elif result_type == "sources":
         output_text.insert("end", f"Source Name: {result['source_name']}\n")
         output_text.insert("end", f"Coutry: {result['country']}\n")
@@ -197,16 +182,14 @@ def display_details(result_type, result,response):
     back_button.pack(pady=5)
     action_buttons.append(back_button)
 
-
 #--------------------------Headline handling-------------------
 def handle_headlines():
     clearingButtons()
-    output_text.insert("end", "*****Select a headline menu button option*****\n")
+    output_text.insert("end", "Select a headline menu button option\n")
     for index, item in enumerate(HSUBMENU):
         button = ck.CTkButton(app, text=item, command=lambda index=index: handle_headline_action(index))
         button.pack(pady=5)
         action_buttons.append(button)
-
 
 def handle_headline_action(action):
     clearingButtons()
@@ -222,49 +205,7 @@ def handle_headline_action(action):
         handle_main()  # Return to the main menu
     elif action == 4:  # Back to main menu
         handle_main()
-      
-def handle_category_selection(type):
-    clearingButtons()
-
-    output_text.insert("end", "*****Categories*****\n")
-    for index, category in enumerate(CATEGORIES):
-        button = ck.CTkButton(app, text=category, command=lambda index=index, type=type: category_selected(index,type))
-        button.pack(pady=5)
-        action_buttons.append(button)
     
-    # Add back button
-    dynamicBack(type)
-
-def category_selected(index,type):
-    parameter = CATEGORIES[index]
-    if type == "headlines":
-        action=1
-    else:
-        action=0     
-    handle_req(type,action,parameter)
-    handle_main()  # Go back to main menu after handling
-
-def handle_country_selection(type):
-    clearingButtons()
-
-    output_text.insert("end", "*****Countries*****\n")
-    for index, country in enumerate(COUNTRIES):
-        button = ck.CTkButton(app, text=country, command=lambda index=index, type=type: country_selected(index,type))
-        button.pack(pady=5)
-        action_buttons.append(button)
-
-    # Add back button
-    dynamicBack(type)
-
-def country_selected(index,type):
-    parameter = COUNTRIES[index]
-    if type == "headlines":
-        action=2
-    else:
-        action=1    
-    handle_req(type,action,parameter)
-    handle_main()
-
 def user_inp(prompt, callback, action):
     action_buttons.clear()
     # Create a frame to contain the prompt, input bar, and submit button
@@ -307,10 +248,10 @@ def process_headline_input(input_keyword, action):
     else:
         output_text.insert("end", "Keyword cannot be empty!\n")
 
-#-----------------------Sources-----------------
+#--------------------------Sources handling-------------------
 def handle_sources():
     clearingButtons()
-    output_text.insert("end", "*****Sources Menu*****\n")
+    output_text.insert("end", "Sources Menu\n")
     for index, item in enumerate(SSUBMENU):
         button = ck.CTkButton(app, text=item, command=lambda index=index: handle_source_action(index))
         button.pack(pady=5)
@@ -327,19 +268,18 @@ def handle_source_action(action):
         handle_language_selection()
     elif action == 3:  # List all
         handle_req("sources", action, "List all")
-        handle_main()  # Return to the main menu
-    elif action == 4:  # Back to main menu
+        handle_main()  
+    elif action == 4:  
         handle_main()
 
 def handle_language_selection():
     clearingButtons()
-    output_text.insert("end", "*****Languages*****\n")
+    output_text.insert("end", "Languages\n")
     for index, language in enumerate(LANGUAGES):
         button = ck.CTkButton(app, text=language, command=lambda index=index, type=type: language_selected(index))
         button.pack(pady=5)
         action_buttons.append(button)
 
-    # Add back button
     back_button = ck.CTkButton(app, text="Back to Sources", command=handle_sources)
     back_button.pack(pady=5)
     action_buttons.append(back_button)
@@ -349,13 +289,51 @@ def language_selected(index):
     handle_req("sources", 2, parameter)
     handle_main()
 
+#--------------------------Shared functions-------------------
+def handle_category_selection(type):
+    clearingButtons()
+    output_text.insert("end", "Categories\n")
+    for index, category in enumerate(CATEGORIES):
+        button = ck.CTkButton(app, text=category, command=lambda index=index, type=type: category_selected(index,type))
+        button.pack(pady=5)
+        action_buttons.append(button)
+    dynamicBack(type)
+
+def category_selected(index,type):
+    parameter = CATEGORIES[index]
+    if type == "headlines":
+        action=1
+    else:
+        action=0     
+    handle_req(type,action,parameter)
+    handle_main()  # Go back to main menu after handling
+
+def handle_country_selection(type):
+    clearingButtons()
+    output_text.insert("end", "Countries\n")
+    for index, country in enumerate(COUNTRIES):
+        button = ck.CTkButton(app, text=country, command=lambda index=index, type=type: country_selected(index,type))
+        button.pack(pady=5)
+        action_buttons.append(button)
+    dynamicBack(type)
+
+def country_selected(index,type):
+    parameter = COUNTRIES[index]
+    if type == "headlines":
+        action=2
+    else:
+        action=1    
+    handle_req(type,action,parameter)
+    handle_main()
+
+#--------------------------Helper functions-------------------
 def clearingButtons():
     for button in action_buttons:
         button.pack_forget()
 
     for widget in dynamic_widgets:
         widget.destroy()
-    dynamic_widgets.clear()  # Clear the list    
+    dynamic_widgets.clear()    
 
 def dynamicBack(type):
     if type=="headlines":
