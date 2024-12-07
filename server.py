@@ -89,6 +89,8 @@ def fetch_data(action, param, client_name, request_type):
             params["category"] = param.lower()
         elif action == 2:  # Search by country
             params["country"] = param.lower()
+        elif action == 3:
+            params["country"] = "us"    
     elif request_type == "sources":
         if action == 0:  # Search by category
             params["category"] = param.lower()
@@ -105,14 +107,10 @@ def fetch_data(action, param, client_name, request_type):
         # Format the results for the client and save it to a file if the user wants to save it
         if request_type == "headlines":
             articles = data.get("articles", [])
+            
             if not articles:
-                print("[WARNING] No articles found for the given keyword. Trying default request.")
-                params = {"apiKey": API_KEY, "country": "us", "pageSize": 15, "language": "en"}
-                response = requests.get(HEADLINES_URL, params=params, timeout=10)
-                response.raise_for_status()
-                data = response.json()
-                articles = data.get("articles", [])
-                
+                # No articles found for the provided parameters
+                return {"status_code": 404, "message": "No articles found for the given parameters."}
             results = [
                 {
                     "source_name": article["source"]["name"],
@@ -125,8 +123,6 @@ def fetch_data(action, param, client_name, request_type):
                 }
                 for article in articles[:15]
             ]
-            if not results:
-                return {"status_code": 404, "message": "No articles found for the keyword."}
 
         elif request_type == "sources":  # Fetch sources data from NewsAPI and format the results for the client and save it to a file if the user wants to save it
             sources = data.get("sources", [])
@@ -185,5 +181,5 @@ def main():
     finally:
         server_socket.close()
 
-if __name__ == "__main__":
+if __name__ == "_main_":
     main()
