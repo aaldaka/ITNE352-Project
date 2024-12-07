@@ -1,4 +1,3 @@
-
 # Multithreaded News Client/Server Information System NewsBeacon
 
 This is a python oriented project that provides real-time news updates from various sources that allows to navigate through headlines, view articles and explore a wide range of categories.
@@ -363,19 +362,19 @@ if __name__ == "__main__":
 
 ```
 
-### Additional Concepts
+## Additional Concepts
 - Implement the GUI using tkinter and customtkinter.
 
-### Acknowledgments
+## Acknowledgments
 We'd like to thank:
 
 - Dr. Mohamed A. Almeer for his lead and help during this project.
 - Our teammates for their hard work and collaboration.
 
-### Conclusion 
+## Conclusion 
 In this project we explored a new programming language **Python** and challenged our obtained knowledge in creating a client/server news system. We have faced many difficulties and obstacles especially after implementing the GUI, but in the end with some research we were able to resolve our own doubts. We learned a lot of new concepts like using pickle, tkinter and threading. This was an exceptional journey to take part of.
 
-### Resources
+## Resources
 - Socket Programming in Python : https://realpython.com/python-sockets/
 - NewsAPI: https://newsapi.org/
 - Threading in Python : https://docs.python.org/3/library/threading.html
