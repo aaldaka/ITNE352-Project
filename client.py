@@ -36,12 +36,12 @@ def welcome():
     username = username_input.get().strip()
     if username:
         clientName=username
-        output_text.insert("end", f"Welcome, {username}!\nEnjoy your ride throughout the news.\n")
+        output_text.insert("end", f"Welcome, {clientName}!\nEnjoy your ride throughout the news.\n")
         username_input.delete(0, 'end')
         username_label.pack_forget()  # Hide the username label
         username_input.pack_forget()   # Hide the input field
         button.place_forget()           # Hide the submit button
-        handle_main()                  # Show main menu
+        app.after(2000, handle_main)  # Wait for 2 seconds before showing the main menu
     else:
         output_text.insert("end", "Please enter a valid name.\n")
 
@@ -125,11 +125,10 @@ def display_results(response):
     results = response.get("results", [])[:15]  # Limit to first 15 results
 
     if not results:
-        output_text.insert("end", "No results found.\n")
-        back_button = ck.CTkButton(app, text="Back to main menu", command=lambda: handle_main())
-        back_button.pack(pady=5)
-        action_buttons.append(back_button)
-
+        output_text.insert("end", "No results found.\nReturning to the main menu...\n")
+        app.after(1500, handle_main)
+        return  # Exit the function early
+    
     output_text.insert("end", "*****Results*****\n")
     output_text.insert("end", "Click on a record to view its details\n")
 
