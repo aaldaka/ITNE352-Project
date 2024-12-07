@@ -164,7 +164,6 @@ def display_results(response):
     result_listbox.bind("<<ListboxSelect>>", on_select)
 
     # Add a back button
-    # back_button = ck.CTkButton(app, text="Back", command=lambda: [clearingButtons(), handle_main()])
     back_button = ck.CTkButton(app, text="Back to main menu", command=lambda: [listbox_frame.destroy(), handle_main()])
     back_button.pack(pady=5)
     action_buttons.append(back_button)
@@ -238,7 +237,11 @@ def handle_category_selection(type):
 
 def category_selected(index,type):
     parameter = CATEGORIES[index]
-    handle_req(type,1,parameter)
+    if type == "headlines":
+        action=1
+    else:
+        action=0     
+    handle_req(type,action,parameter)
     handle_main()  # Go back to main menu after handling
 
 def handle_country_selection(type):
@@ -255,7 +258,11 @@ def handle_country_selection(type):
 
 def country_selected(index,type):
     parameter = COUNTRIES[index]
-    handle_req(type,1,parameter)
+    if type == "headlines":
+        action=2
+    else:
+        action=1    
+    handle_req(type,action,parameter)
     handle_main()
 
 def user_inp(prompt, callback, action):
@@ -294,7 +301,7 @@ def user_inp(prompt, callback, action):
 
 def process_headline_input(input_keyword, action):
     keyword = input_keyword.strip()  # Store the entered keyword
-    if keyword:  # Ensure the keyword is not empty
+    if keyword:
         handle_req("headlines", action, keyword)  # Use handle_req to send the request
         handle_main()  # Return to the main menu after handling the input
     else:
