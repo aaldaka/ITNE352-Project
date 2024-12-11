@@ -69,120 +69,6 @@ def router(action): # Redirections to menus
         handle_sources()
     elif action == "Quit":
         app.quit()        
-
-# Handles request
-def handle_req(type, action, parameter):  # Formats data using pickle, to send to the server
-    request_data = {
-        "type": type,  # Type of request: headlines, sources, etc.
-        "action": action,  # Action: e.g., search by keyword, category, country
-        "parameter": parameter,  # The actual parameter (e.g., keyword, category, etc.)
-        "username": clientName
-    }
-    print(request_data)
-    encoded_request = pickle.dumps(request_data)
-    threading.Thread(target=send_request_to_server, args=(encoded_request,)).start()  # Diff thread to handle the request
-
-def send_request_to_server(encoded_request):
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_s:
-            print("Connecting to server...")
-            client_s.connect(("127.0.0.1", 8081))  # Connect to the server
-            print("Sending request...")
-            client_s.sendall(encoded_request)  # Send the encoded request
-            response_data = b"" 
-            while True:
-                part = client_s.recv(1024)
-                response_data += part
-                if len(part) < 1024:
-                    break
-
-            response = pickle.loads(response_data) # Deserialize the response
-            app.after(0, process_response, response) # Update the GUI with the response in the main thread
-    except Exception as e:
-        app.after(0, output_text.insert, "end", f"Error communicating with server: {e}\n")
-        print(f"Error: {e}")
-
-def process_response(response):
-    if response.get("status_code") == 200:
-        clearingButtons()
-        output_text.insert("end","Results\n")
-        display_results(response)
-    else:
-        output_text.insert("end", f"Error: {response.get('message', 'Unknown error occurred')}\n")
-
-# Handles Results and Details
-def display_results(response):
-    clearingButtons()
-    output_text.delete("1.0", "end")  # Clear previous output
-    results = response.get("results", [])[:15]  # Limit to first 15 results
-
-    if not results:
-        output_text.insert("end", "𑁍No results found.\nReturning to the main menu...\n")
-        app.after(1500, handle_main)
-        return  # Exit the function early
-    
-    output_text.insert("end", "𑁍Results\n")
-    output_text.insert("end", "-Click on a record to view its details\n")
-
-    # Create a frame to hold the Listbox and Scrollbar
-    listbox_frame = ck.CTkFrame(app)
-    listbox_frame.pack(pady=10, fill="both", expand=True)
-    dynamic_widgets.append(listbox_frame)
-    # Create a Listbox widget
-    result_listbox = tk.Listbox(listbox_frame, height=15, selectmode=tk.SINGLE)
-    result_listbox.pack(side="left", fill="both", expand=True)
-    # Attach a scrollbar to the Listbox
-    scrollbar = tk.Scrollbar(listbox_frame, orient="vertical", command=result_listbox.yview)
-    scrollbar.pack(side="right", fill="y")
-    result_listbox.config(yscrollcommand=scrollbar.set)
-
-    for i, res in enumerate(results):
-        if response["type"] == "headlines":
-            item_text = f"{i+1}. {res['source_name']}: {res['author']} presents - {res['title']}"
-        elif response["type"] == "sources":
-            item_text = f"{i+1}. {res['source_name']}"
-        result_listbox.insert("end", item_text)
-
-    def on_select(event):
-        selected_index = result_listbox.curselection()  # Get the index of the selected item
-        if selected_index:
-            selected_result = results[selected_index[0]]
-            display_details(response["type"], selected_result,response)
-
-    result_listbox.bind("<<ListboxSelect>>", on_select)
-
-    back_button = ck.CTkButton(app, text="Back to main menu", command=lambda: [listbox_frame.destroy(), handle_main()])
-    back_button.pack(pady=5)
-    action_buttons.append(back_button)
-
-def display_details(result_type, result,response):
-    clearingButtons()
-    output_text.delete("1.0", "end")  # Clear the output box
-
-    output_text.insert("end", "𑁍Details\n")
-    if result_type == "headlines":
-        output_text.insert("end", f"Source: {result['source_name']}\n")
-        output_text.insert("end", f"Author: {result['author']}\n")
-        output_text.insert("end", f"Title: {result['title']}\n")
-        output_text.insert("end", f"URL: {result['url']}\n")
-        output_text.insert("end", f"Published on: {result['publish_date']}\n")
-        output_text.insert("end", f"Published at: {result['publish_time']}\n")
-    elif result_type == "sources":
-        output_text.insert("end", f"Source Name: {result['source_name']}\n")
-        output_text.insert("end", f"Coutry: {result['country']}\n")
-        output_text.insert("end", f"Description: {result['description']}\n")
-        output_text.insert("end", f"URL: {result['url']}\n")
-        output_text.insert("end", f"Category: {result['category']}\n")
-        output_text.insert("end", f"Language: {result['language']}\n")
-
-    back_button = ck.CTkButton(app, text="Back to results", command=lambda: [clearingButtons(), display_results(response)])
-    back_button.pack(pady=5)
-    action_buttons.append(back_button)    
-
-    back_button = ck.CTkButton(app, text="Back to main menu", command=lambda: [clearingButtons(), handle_main()])
-    back_button.pack(pady=5)
-    action_buttons.append(back_button)
-
 #--------------------------Headline handling-------------------
 def handle_headlines():
     clearingButtons()
@@ -209,7 +95,7 @@ def handle_headline_action(action):
     
 def user_inp(prompt, callback, action):
     action_buttons.clear()
-    # Create a frame to contain the prompt, input bar, and submit button
+
     input_frame = ck.CTkFrame(app)
     input_frame.pack(pady=10)
 
@@ -326,6 +212,120 @@ def country_selected(index,type):
         action=1    
     handle_req(type,action,parameter)
     handle_main()
+    
+# Handles request
+def handle_req(type, action, parameter):  # Formats data using pickle, to send to the server
+    request_data = {
+        "type": type,  # Type of request: headlines, sources, etc.
+        "action": action,  # Action: e.g., search by keyword, category, country
+        "parameter": parameter,  # The actual parameter (e.g., keyword, category, etc.)
+        "username": clientName
+    }
+    print(request_data)
+    encoded_request = pickle.dumps(request_data)
+    threading.Thread(target=send_request_to_server, args=(encoded_request,)).start()  # Diff thread to handle the request
+
+def send_request_to_server(encoded_request):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_s:
+            print("Connecting to server...")
+            client_s.connect(("127.0.0.1", 8081))  # Connect to the server
+            print("Sending request...")
+            client_s.sendall(encoded_request)  # Send the encoded request
+            response_data = b"" 
+            while True:
+                part = client_s.recv(1024)
+                response_data += part
+                if len(part) < 1024:
+                    break
+
+            response = pickle.loads(response_data) # Deserialize the response
+            app.after(0, process_response, response) # Update the GUI with the response in the main thread
+    except Exception as e:
+        app.after(0, output_text.insert, "end", f"Error communicating with server: {e}\n")
+        print(f"Error: {e}")
+
+def process_response(response):
+    if response.get("status_code") == 200:
+        clearingButtons()
+        output_text.insert("end","Results\n")
+        display_results(response)
+    else:
+        output_text.insert("end", f"Error: {response.get('message', 'Unknown error occurred')}\n")
+
+# Handles Results and Details
+def display_results(response):
+    clearingButtons()
+    output_text.delete("1.0", "end")  # Clear previous output
+    results = response.get("results", [])[:15]  # Limit to first 15 results
+
+    if not results:
+        output_text.insert("end", "𑁍No results found.\nReturning to the main menu...\n")
+        app.after(1500, handle_main)
+        return  # Exit the function early
+    
+    output_text.insert("end", "𑁍Results\n")
+    output_text.insert("end", "-Click on a record to view its details\n")
+
+    # Create a frame to hold the Listbox and Scrollbar
+    listbox_frame = ck.CTkFrame(app)
+    listbox_frame.pack(pady=10, fill="both", expand=True)
+    dynamic_widgets.append(listbox_frame)
+    # Create a Listbox widget
+    result_listbox = tk.Listbox(listbox_frame, height=15, selectmode=tk.SINGLE)
+    result_listbox.pack(side="left", fill="both", expand=True)
+    # Attach a scrollbar to the Listbox
+    scrollbar = tk.Scrollbar(listbox_frame, orient="vertical", command=result_listbox.yview)
+    scrollbar.pack(side="right", fill="y")
+    result_listbox.config(yscrollcommand=scrollbar.set)
+
+    for i, res in enumerate(results):
+        if response["type"] == "headlines":
+            item_text = f"{i+1}. {res['source_name']}: {res['author']} presents - {res['title']}"
+        elif response["type"] == "sources":
+            item_text = f"{i+1}. {res['source_name']}"
+        result_listbox.insert("end", item_text)
+
+    def on_select(event):
+        selected_index = result_listbox.curselection()  # Get the index of the selected item
+        if selected_index:
+            selected_result = results[selected_index[0]]
+            display_details(response["type"], selected_result,response)
+
+    result_listbox.bind("<<ListboxSelect>>", on_select)
+
+    back_button = ck.CTkButton(app, text="Back to main menu", command=lambda: [listbox_frame.destroy(), handle_main()])
+    back_button.pack(pady=5)
+    action_buttons.append(back_button)
+
+def display_details(result_type, result,response):
+    clearingButtons()
+    output_text.delete("1.0", "end")  # Clear the output box
+
+    output_text.insert("end", "𑁍Details\n")
+    if result_type == "headlines":
+        output_text.insert("end", f"Source: {result['source_name']}\n")
+        output_text.insert("end", f"Author: {result['author']}\n")
+        output_text.insert("end", f"Title: {result['title']}\n")
+        output_text.insert("end", f"URL: {result['url']}\n")
+        output_text.insert("end", f"Published on: {result['publish_date']}\n")
+        output_text.insert("end", f"Published at: {result['publish_time']}\n")
+    elif result_type == "sources":
+        output_text.insert("end", f"Source Name: {result['source_name']}\n")
+        output_text.insert("end", f"Coutry: {result['country']}\n")
+        output_text.insert("end", f"Description: {result['description']}\n")
+        output_text.insert("end", f"URL: {result['url']}\n")
+        output_text.insert("end", f"Category: {result['category']}\n")
+        output_text.insert("end", f"Language: {result['language']}\n")
+
+    back_button = ck.CTkButton(app, text="Back to results", command=lambda: [clearingButtons(), display_results(response)])
+    back_button.pack(pady=5)
+    action_buttons.append(back_button)    
+
+    back_button = ck.CTkButton(app, text="Back to main menu", command=lambda: [clearingButtons(), handle_main()])
+    back_button.pack(pady=5)
+    action_buttons.append(back_button)
+
 
 #--------------------------Helper functions-------------------
 def clearingButtons():
